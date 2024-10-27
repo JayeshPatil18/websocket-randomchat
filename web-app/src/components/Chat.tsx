@@ -45,8 +45,12 @@ const Chat: React.FC<ChatProps> = ({ isConnected, onSkip, userID }) => {
         {isConnected ? (
           <>
             <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#979797'}}>
-              You're now chatting with a random stranger! Say hi!
+              You're now chatting with a random stranger.
             </p>
+            {chatHistory.length === 0 && <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#979797'}}>
+              <br/>
+              Say Hi !!!
+            </p>}
             {chatHistory.map((msg, index) => (
               <div key={index} className="chat-message">
               <strong>{msg.sender}: </strong>
