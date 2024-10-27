@@ -33,8 +33,9 @@
 
         // Notifications for successful joining and pairing
         socket.on('paired', (msg) => {
+            const { message, partnerId }  = msg;
             const li = document.createElement('li');
-            li.textContent = msg;
+            li.textContent = partnerId;
             document.getElementById('messages').appendChild(li);
         });
 

@@ -2,31 +2,29 @@
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
-const mongoose = require('mongoose');
 const { Server } = require('socket.io');
+const cors = require('cors');
 
 // Initialize express app and HTTP server
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+const io = new Server(server, {
+  cors: {
+      origin: 'http://localhost:5173', // allow your React app's origin
+      methods: ['GET', 'POST'],
+      credentials: true, // allow credentials if needed
+  },
+});
 
 const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI;
 
 // Define a static campus code
 const VALID_CAMPUS_CODE = 'ghrcem'; // Replace with your desired campus code
 
-// Connect to MongoDB
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
-
 // Middleware to serve static files
 app.use(express.static('public'));
-
-// Import models
-const ChatMessage = require('./models/ChatMessage');
-const UserSession = require('./models/UserSession');
+app.use(cors()); // Use the CORS middleware
 
 // Store connected users and their assigned chat partners
 const connectedUsers = {};
@@ -56,9 +54,15 @@ io.on('connection', (socket) => {
       connectedUsers[socket.id] = { campusCode, partnerId: randomPartnerId };
       connectedUsers[randomPartnerId].partnerId = socket.id;
 
-      // Notify both users that they have been paired
-      socket.emit('paired', `You are now paired with a random user.`);
-      io.to(randomPartnerId).emit('paired', `You are now paired with a random user.`);
+      // Notify both users that they have been paired, including partnerId
+  socket.emit('paired', {
+    message: `You are now paired with a random user.`,
+    partnerId: randomPartnerId
+  });
+  io.to(randomPartnerId).emit('paired', {
+    message: `You are now paired with a random user.`,
+    partnerId: socket.id
+  });
     } else {
       // Add the user to the list, without a partner yet
       connectedUsers[socket.id] = { campusCode, partnerId: null };
@@ -69,7 +73,7 @@ io.on('connection', (socket) => {
     io.to(campusCode).emit('notification', `A new user has joined campus ${campusCode}`);
   });
 
-  socket.on('message', async (msg) => {
+  socket.on('message', (msg) => {
     const user = connectedUsers[socket.id];
     if (!user || !user.partnerId) {
       socket.emit('error', 'No partner found to chat with. Waiting for another user.');
@@ -79,9 +83,6 @@ io.on('connection', (socket) => {
     const recipientSocketId = user.partnerId;
 
     if (connectedUsers[recipientSocketId]) {
-      // Save message to the database
-      await ChatMessage.create({ campusCode: user.campusCode, senderId: socket.id, message: msg.message });
-
       // Send the message directly to the chat partner
       io.to(recipientSocketId).emit('message', { message: msg.message, senderId: socket.id });
     } else {
