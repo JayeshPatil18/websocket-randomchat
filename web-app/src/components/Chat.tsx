@@ -2,17 +2,23 @@
 import React, { useState } from 'react';
 import './Chat.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-
+import socket from '../socket';
 
 interface ChatProps {
   isConnected: boolean;
   onSkip: () => void;
-  userID: string;
 }
 
-const Chat: React.FC<ChatProps> = ({ isConnected, onSkip, userID }) => {
+const Chat: React.FC<ChatProps> = ({ isConnected, onSkip }) => {
   const [chatMessage, setChatMessage] = useState<string>('');
   const [chatHistory, setChatHistory] = useState<{ sender: string; message: string }[]>([]);
+  const [userID, setUserId] = useState('');
+
+  socket.once('paired', (data: { message: any; partnerId: any; }) => {
+    const { message, partnerId } = data;
+  
+    setUserId(partnerId);
+  });
 
   const handleSendMessage = () => {
     if (chatMessage) {

@@ -9,7 +9,6 @@ import socket from './socket'; // Import the socket instance
 const App: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [userID] = useState("LG-d4vaVCsAf-xKrAAAB"); // Mock user ID
 
   const handleJoinChat = (campusCode: string) => {
     console.log("Campus Code:", campusCode); // Optional: Handle campus code if needed
@@ -49,7 +48,6 @@ const App: React.FC = () => {
         <Chat
           isConnected={isConnected}
           onSkip={handleSkip}
-          userID={userID}
         />
       )}
     </div>
