@@ -1,0 +1,42 @@
+/* src/components/Landing.css */
+.landing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f3f3f3;
+}
+
+.landing h1 {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.landing p {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  color: #555;
+}
+
+.campus-code-input {
+  width: 250px;
+  padding: 10px;
+  margin-bottom: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.join-chat-btn {
+  width: 150px;
+  padding: 10px;
+  background-color: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.join-chat-btn:hover {
+  background-color: #5b54d9;
+}
