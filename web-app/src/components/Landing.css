@@ -15,26 +15,37 @@
 
 .landing p {
   font-size: 1.2rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   color: #555;
+  font-style: italic;
 }
 
 .campus-code-input {
   width: 250px;
-  padding: 10px;
+  padding: 15px;
   margin-bottom: 1rem;
   border-radius: 5px;
   border: 1px solid #ddd;
+  font-size: 15px;
+  font-weight: bold;
 }
 
+.campus-code-input::placeholder {
+  color: #9a9a9a; /* Placeholder text color */
+  font-weight: 500; /* Font weight for placeholder text */
+}
+
+
 .join-chat-btn {
-  width: 150px;
-  padding: 10px;
+  width: 250px;
+  padding: 15px;
   background-color: #6c63ff;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  font-size: 15px;
+  font-weight: bold;
 }
 
 .join-chat-btn:hover {
