@@ -24,27 +24,27 @@ const Chat: React.FC<ChatProps> = ({ isConnected, onSkip, userID }) => {
   return (
     <div className="chat">
       <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexGrow: 1 }}>
-    {isConnected ? (
-      <p style={{ display: 'flex', alignItems: 'center', margin: 0 }}>
-        <i className="fas fa-user-circle" style={{ marginRight: '8px', color: '#6c63ff' }}></i>
-        ID: {userID}
-      </p>
-    ) : (
-      <p style={{ margin: 0 }}>🔍 Waiting for partner...</p>
-    )}
-  </div>
-  {isConnected && (
-    <p style={{ marginLeft: 'auto', fontSize: '12px' }}> {/* Move the online status to the end */}
-      <span style={{ fontSize: '12px', marginLeft: '4px' }}>🟢</span> Online
-    </p>
-  )}
-</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexGrow: 1 }}>
+          {isConnected ? (
+            <p style={{ display: 'flex', alignItems: 'center', margin: 0 }}>
+              <i className="fas fa-user-circle" style={{ marginRight: '8px', color: '#6c63ff' }}></i>
+              ID: {userID}
+            </p>
+          ) : (
+            <p style={{ margin: 0 }}>🔍 Waiting for partner...</p>
+          )}
+        </div>
+        {isConnected && (
+          <p style={{ marginLeft: 'auto', fontSize: '16px' }}> {/* Move the online status to the end */}
+            <span style={{ fontSize: '12px', marginLeft: '4px' }}>🟢</span> Online
+          </p>
+        )}
+      </div>
 
       <div className="message-box">
         {isConnected ? (
           <>
-            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#979797' }}>
+            <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#979797' }}>
               You're now chatting with a random stranger! Say hi!
             </p>
             {chatHistory.map((msg, index) => (
@@ -54,7 +54,7 @@ const Chat: React.FC<ChatProps> = ({ isConnected, onSkip, userID }) => {
             ))}
           </>
         ) : (
-          <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#979797' }}>
+          <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#979797' }}>
             Sabra ka phal meetha hi hota hai!!!
           </p>
         )}
