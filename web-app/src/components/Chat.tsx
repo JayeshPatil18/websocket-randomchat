@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import './Chat.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import socket from '../socket';
+import generateRandomString from '../method';
 
 interface ChatProps {
   isConnected: boolean;
@@ -13,6 +14,7 @@ const Chat: React.FC<ChatProps> = ({ isConnected, onSkip }) => {
   const [chatMessage, setChatMessage] = useState<string>('');
   const [chatHistory, setChatHistory] = useState<{ sender: string; message: string }[]>([]);
   const [userID, setUserId] = useState('');
+  const [sysMsg, setSysMsg] = useState("You're now chatting with a random stranger.");
 
   socket.once('paired', (data: { message: any; partnerId: any; }) => {
     const { message, partnerId } = data;
@@ -34,7 +36,8 @@ const Chat: React.FC<ChatProps> = ({ isConnected, onSkip }) => {
           {isConnected ? (
             <p style={{ display: 'flex', alignItems: 'center', margin: 0 }}>
               <i className="fas fa-user-circle" style={{ marginRight: '8px', color: '#6c63ff' }}></i>
-              ID: {userID}
+              {userID ? `ID: ${userID}` : 'Partner'}
+
             </p>
           ) : (
             <p style={{ margin: 0 }}>🔍 Waiting for partner...</p>
@@ -51,7 +54,7 @@ const Chat: React.FC<ChatProps> = ({ isConnected, onSkip }) => {
         {isConnected ? (
           <>
             <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#979797'}}>
-              You're now chatting with a random stranger.
+            {sysMsg}
             </p>
             {chatHistory.length === 0 && <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#979797'}}>
               <br/>
