@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Campus Chat</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #messages { list-style-type: none; }
+        #messages li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>Anonymous Campus Chat</h1>
+    <input id="campusCode" placeholder="Enter Campus Code">
+    <button id="joinBtn">Join Campus</button>
+    
+    <h2>Connected Users</h2>
+    <ul id="connectedUsersList"></ul>
+    
+    <input id="recipientId" placeholder="Recipient Socket ID">
+    <input id="messageInput" placeholder="Type your message">
+    <button id="sendBtn">Send</button>
+    
+    <ul id="messages"></ul>
+
+    <script>
+        const socket = io('http://localhost:3000');
+
+        document.getElementById('joinBtn').onclick = () => {
+            const campusCode = document.getElementById('campusCode').value;
+            socket.emit('joinCampus', campusCode);
+        };
+
+        socket.on('notification', (msg) => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            document.getElementById('messages').appendChild(li);
+        });
+
+        socket.on('error', (msg) => {
+            alert(msg); // Show an alert with the error message
+        });
+
+        document.getElementById('sendBtn').onclick = () => {
+            const message = document.getElementById('messageInput').value;
+            const recipientId = document.getElementById('recipientId').value;
+
+            if (!recipientId) {
+                alert('Please enter a recipient Socket ID.');
+                return;
+            }
+
+            const campusCode = document.getElementById('campusCode').value;
+            socket.emit('message', { campusCode, senderId: socket.id, recipientId, message });
+            document.getElementById('messageInput').value = ''; // Clear input
+        };
+
+        socket.on('message', (msg) => {
+            const li = document.createElement('li');
+            li.textContent = `${msg.senderId}: ${msg.message}`;
+            document.getElementById('messages').appendChild(li);
+        });
+
+        // Listen for connected users
+        socket.on('userConnected', (userId) => {
+            const li = document.createElement('li');
+            li.textContent = userId;
+            li.id = userId; // Set id to the user's socket ID
+            document.getElementById('connectedUsersList').appendChild(li);
+        });
+
+        socket.on('userDisconnected', (userId) => {
+            const userLi = document.getElementById(userId);
+            if (userLi) {
+                userLi.remove(); // Remove user from the connected users list
+            }
+        });
+    </script>
+</body>
+</html>
