@@ -44,13 +44,14 @@ const Chat: React.FC<ChatProps> = ({ isConnected, onSkip, userID }) => {
       <div className="message-box">
         {isConnected ? (
           <>
-            <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#979797' }}>
+            <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#979797'}}>
               You're now chatting with a random stranger! Say hi!
             </p>
             {chatHistory.map((msg, index) => (
               <div key={index} className="chat-message">
-                <strong>{msg.sender}: </strong>{msg.message}
-              </div>
+              <strong>{msg.sender}: </strong>
+              <span className="message-text">{msg.message}</span>
+            </div>            
             ))}
           </>
         ) : (
@@ -68,6 +69,11 @@ const Chat: React.FC<ChatProps> = ({ isConnected, onSkip, userID }) => {
           value={chatMessage}
           onChange={(e) => setChatMessage(e.target.value)}
           disabled={!isConnected}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && isConnected) {
+              handleSendMessage();
+            }
+          }}
         />
         <button onClick={handleSendMessage} disabled={!isConnected}>Send</button>
       </div>

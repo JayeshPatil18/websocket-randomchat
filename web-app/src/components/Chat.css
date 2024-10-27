@@ -25,8 +25,29 @@
 }
 
 .chat-message {
-  margin: 0.5rem 0;
+  display: flex; /* Maintains flex layout if needed */
+  align-items: center; /* Aligns items at the start */
+  margin: 0.8rem 0; /* Spacing between messages */
+  color: #615EF0;
+  font-size:15px;
 }
+
+.message-text {
+  display: inline-block; /* Ensures the message text wraps correctly */
+  padding: 10px 16px; /* Optional padding */
+  border-radius: 12px; /* Optional rounded corners */
+  background-color: #e0e0e0; /* Optional background color */
+  margin-left: 10px;
+  font-size:17px;
+
+  color: #ffffff;
+
+
+  background: #615EF0; /* Background color */
+  border-radius: 12px; /* Rounded corners */
+}
+
+
 
 .input-box {
   display: flex;
