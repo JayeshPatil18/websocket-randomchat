@@ -28,8 +28,16 @@ app.use(express.static('public'));
 const ChatMessage = require('./models/ChatMessage');
 const UserSession = require('./models/UserSession');
 
-// Store connected users in memory
+// Store connected users and their assigned chat partners
 const connectedUsers = {};
+
+// Helper function to find a random user (excluding the current user)
+function getRandomUser(currentSocketId) {
+  const activeUsers = Object.keys(connectedUsers).filter(id => id !== currentSocketId);
+  if (activeUsers.length === 0) return null;
+  const randomIndex = Math.floor(Math.random() * activeUsers.length);
+  return activeUsers[randomIndex];
+}
 
 // WebSocket connections
 io.on('connection', (socket) => {
@@ -42,28 +50,58 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Save the user's socket ID to the connected users list
-    connectedUsers[socket.id] = { campusCode }; // Store campus code or any other user info
+    // Assign a random user as chat partner or wait for the next user to join
+    const randomPartnerId = getRandomUser(socket.id);
+    if (randomPartnerId) {
+      connectedUsers[socket.id] = { campusCode, partnerId: randomPartnerId };
+      connectedUsers[randomPartnerId].partnerId = socket.id;
+
+      // Notify both users that they have been paired
+      socket.emit('paired', `You are now paired with a random user.`);
+      io.to(randomPartnerId).emit('paired', `You are now paired with a random user.`);
+    } else {
+      // Add the user to the list, without a partner yet
+      connectedUsers[socket.id] = { campusCode, partnerId: null };
+      socket.emit('waiting', `Waiting for another user to join...`);
+    }
+
     socket.join(campusCode);
     io.to(campusCode).emit('notification', `A new user has joined campus ${campusCode}`);
   });
 
   socket.on('message', async (msg) => {
-    // Check if the recipient exists in connected users
-    const recipientSocketId = Object.keys(connectedUsers).find(id => id === msg.recipientId);
+    const user = connectedUsers[socket.id];
+    if (!user || !user.partnerId) {
+      socket.emit('error', 'No partner found to chat with. Waiting for another user.');
+      return;
+    }
 
-    if (recipientSocketId) {
+    const recipientSocketId = user.partnerId;
+
+    if (connectedUsers[recipientSocketId]) {
       // Save message to the database
-      await ChatMessage.create(msg);
-      // Send the message directly to the specified recipient
-      io.to(recipientSocketId).emit('message', msg);
+      await ChatMessage.create({ campusCode: user.campusCode, senderId: socket.id, message: msg.message });
+
+      // Send the message directly to the chat partner
+      io.to(recipientSocketId).emit('message', { message: msg.message, senderId: socket.id });
     } else {
-      socket.emit('error', 'User not found.');
+      socket.emit('error', 'Your chat partner has disconnected.');
     }
   });
 
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
+    
+    // Notify partner of disconnection and remove partner link
+    const user = connectedUsers[socket.id];
+    if (user && user.partnerId) {
+      const partnerSocketId = user.partnerId;
+      if (connectedUsers[partnerSocketId]) {
+        io.to(partnerSocketId).emit('notification', 'Your chat partner has disconnected.');
+        connectedUsers[partnerSocketId].partnerId = null;
+      }
+    }
+    
     // Remove user from connected users list
     delete connectedUsers[socket.id];
   });

@@ -7,7 +7,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <style>
         body { font-family: Arial, sans-serif; }
-        #messages { list-style-type: none; }
+        #messages { list-style-type: none; padding: 0; }
         #messages li { margin: 5px 0; }
     </style>
 </head>
@@ -16,66 +16,65 @@
     <input id="campusCode" placeholder="Enter Campus Code">
     <button id="joinBtn">Join Campus</button>
     
-    <h2>Connected Users</h2>
-    <ul id="connectedUsersList"></ul>
-    
-    <input id="recipientId" placeholder="Recipient Socket ID">
+    <h2>Chat Messages</h2>
+    <ul id="messages"></ul>
+
     <input id="messageInput" placeholder="Type your message">
     <button id="sendBtn">Send</button>
-    
-    <ul id="messages"></ul>
 
     <script>
         const socket = io('http://localhost:3000');
 
+        // Join the campus chat room
         document.getElementById('joinBtn').onclick = () => {
             const campusCode = document.getElementById('campusCode').value;
             socket.emit('joinCampus', campusCode);
         };
 
+        // Notifications for successful joining and pairing
+        socket.on('paired', (msg) => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            document.getElementById('messages').appendChild(li);
+        });
+
+        socket.on('waiting', (msg) => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            document.getElementById('messages').appendChild(li);
+        });
+
+        // Display notifications in the chat
         socket.on('notification', (msg) => {
             const li = document.createElement('li');
             li.textContent = msg;
             document.getElementById('messages').appendChild(li);
         });
 
+        // Handle error messages
         socket.on('error', (msg) => {
             alert(msg); // Show an alert with the error message
         });
 
+        // Send message to the paired user
         document.getElementById('sendBtn').onclick = () => {
             const message = document.getElementById('messageInput').value;
-            const recipientId = document.getElementById('recipientId').value;
-
-            if (!recipientId) {
-                alert('Please enter a recipient Socket ID.');
-                return;
-            }
-
-            const campusCode = document.getElementById('campusCode').value;
-            socket.emit('message', { campusCode, senderId: socket.id, recipientId, message });
+            socket.emit('message', { message });
             document.getElementById('messageInput').value = ''; // Clear input
         };
 
+        // Display incoming messages from paired user
         socket.on('message', (msg) => {
             const li = document.createElement('li');
-            li.textContent = `${msg.senderId}: ${msg.message}`;
+            li.textContent = `Partner: ${msg.message}`;
             document.getElementById('messages').appendChild(li);
         });
 
-        // Listen for connected users
-        socket.on('userConnected', (userId) => {
+        // Update when a user disconnects
+        socket.on('userDisconnected', () => {
             const li = document.createElement('li');
-            li.textContent = userId;
-            li.id = userId; // Set id to the user's socket ID
-            document.getElementById('connectedUsersList').appendChild(li);
-        });
-
-        socket.on('userDisconnected', (userId) => {
-            const userLi = document.getElementById(userId);
-            if (userLi) {
-                userLi.remove(); // Remove user from the connected users list
-            }
+            li.textContent = 'Your chat partner has disconnected.';
+            document.getElementById('messages').appendChild(li);
         });
     </script>
 </body>
