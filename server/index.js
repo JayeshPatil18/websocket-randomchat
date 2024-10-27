@@ -37,7 +37,7 @@ io.on('connection', (socket) => {
 
   socket.on('joinCampus', (campusCode) => {
     // Check if the entered campus code matches the predefined static value
-    if (campusCode !== VALID_CAMPUS_CODE) {
+    if (campusCode.toLowerCase() !== VALID_CAMPUS_CODE.toLowerCase()) {
       socket.emit('error', 'Invalid campus code. Please try again.');
       return;
     }
