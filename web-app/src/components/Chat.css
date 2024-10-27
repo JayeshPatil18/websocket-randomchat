@@ -1,4 +1,9 @@
 /* src/components/Chat.css */
+
+*{
+  padding: 0%;
+}
+
 .chat {
   display: flex;
   flex-direction: column;
@@ -8,7 +13,7 @@
 
 .header {
   padding: 1rem;
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: bold;
   background-color: #fff;
   text-align: center;
