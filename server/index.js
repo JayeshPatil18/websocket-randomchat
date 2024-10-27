@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // Define a static campus code
-const VALID_CAMPUS_CODE = 'MY_CAMPUS_CODE'; // Replace with your desired campus code
+const VALID_CAMPUS_CODE = 'ghrcem'; // Replace with your desired campus code
 
 // Connect to MongoDB
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
