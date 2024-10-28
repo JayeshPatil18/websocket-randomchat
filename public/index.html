@@ -9,18 +9,24 @@
         body { font-family: Arial, sans-serif; }
         #messages { list-style-type: none; padding: 0; }
         #messages li { margin: 5px 0; }
+        #statusMessage { margin-top: 10px; color: green; }
+        #errorMessage { margin-top: 10px; color: red; }
     </style>
 </head>
 <body>
     <h1>Anonymous Campus Chat</h1>
     <input id="campusCode" placeholder="Enter Campus Code">
     <button id="joinBtn">Join Campus</button>
-    
+
     <h2>Chat Messages</h2>
     <ul id="messages"></ul>
 
     <input id="messageInput" placeholder="Type your message">
     <button id="sendBtn">Send</button>
+
+    <button id="statusBtn">Check Server Status</button>
+    <div id="statusMessage"></div> <!-- Element to display server status -->
+    <div id="errorMessage"></div>   <!-- Element to display error messages -->
 
     <script>
         const socket = io('http://localhost:3000');
@@ -31,11 +37,25 @@
             socket.emit('joinCampus', campusCode);
         };
 
+        // Check server status
+        document.getElementById('statusBtn').onclick = () => {
+            fetch('http://localhost:3000/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('statusMessage').textContent = data.message;
+                    document.getElementById('errorMessage').textContent = ''; // Clear previous error messages
+                })
+                .catch(error => {
+                    document.getElementById('statusMessage').textContent = '';
+                    document.getElementById('errorMessage').textContent = 'Error: Unable to reach the server.';
+                });
+        };
+
         // Notifications for successful joining and pairing
         socket.on('paired', (msg) => {
-            const { message, partnerId }  = msg;
+            const { message, partnerId } = msg;
             const li = document.createElement('li');
-            li.textContent = partnerId;
+            li.textContent = `You are paired with: ${partnerId}`;
             document.getElementById('messages').appendChild(li);
         });
 
@@ -76,6 +96,11 @@
             const li = document.createElement('li');
             li.textContent = 'Your chat partner has disconnected.';
             document.getElementById('messages').appendChild(li);
+        });
+
+        // Handle user disconnect and cleanup
+        window.addEventListener('beforeunload', () => {
+            socket.disconnect();
         });
     </script>
 </body>
