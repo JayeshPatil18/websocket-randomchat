@@ -15,22 +15,23 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
   const [chatHistory, setChatHistory] = useState<{ sender: string; message: string }[]>([]);
   const [userID, setUserId] = useState('');
   const [sysMsg, setSysMsg] = useState("You're now chatting with a random stranger.");
+  const [skipBtnText, setSkipBtnText] = useState("Skip");
 
   useEffect(() => {
     // Join the chat room when campus code is provided
     socket.emit('joinCampus', campusCode);
 
-    socket.once('waiting', () => {
+    socket.on('waiting', () => {
       setIsSearching(true)
       setChatHistory([]);
     });
-    socket.once('paired', (data: { message: string; partnerId: string }) => {
+    socket.on('paired', (data: { message: string; partnerId: string }) => {
       setIsConnected(true);
       setIsSearching(false);
       setUserId(data.partnerId);
       setSysMsg(data.message || "You're now paired with a stranger.");
     });
-    socket.once('error', (msg) => {
+    socket.on('error', (msg) => {
       alert(msg);
       setIsSearching(false);
     });
@@ -40,11 +41,14 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
         setSysMsg(msg);
       }
 
-      if(msg.includes("skipped")){
+      if(msg.includes("Your chat partner has skipped")){
         // after skipped , emit a new join request from react app
         socket.emit('joinCampus', campusCode);
-        setIsSearching(true)
-        setIsConnected(false);
+        // setIsSearching(true)
+        // setIsConnected(false);
+
+        setChatHistory([]);
+        setSkipBtnText("New")
       }
     });
 
@@ -76,11 +80,17 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
   };
 
   const handleSkip = () => {
+    
     setIsConnected(false);
     setIsSearching(true);
     setChatHistory([]);
 
-    socket.emit('skip');
+    if (skipBtnText === "New") {
+      socket.emit('disconnect');
+      socket.emit('joinCampus', campusCode); // Ensure campusCode is defined
+    } else {
+      socket.emit('skip');
+    }
   };
 
   const handleSystemMessage = () => {
@@ -119,7 +129,7 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
                 color: sysMsg.includes('skip') ? '#6c63ff' : '#979797' // Conditional color based on 'skip'
               }}
             >
-              {sysMsg}
+              <div dangerouslySetInnerHTML={{ __html: sysMsg.includes("Your chat partner has skipped the chat.") ? `${sysMsg}<br>Click 'New'` : sysMsg }} />
             </p>
 
             {handleSystemMessage() && (
@@ -143,8 +153,8 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
       </div>
 
       <div className="input-box">
-        <button onClick={handleSkip} className="skip-btn">
-          Skip
+        <button onClick={handleSkip} className="skip-btn" disabled={!isConnected}>
+          {skipBtnText}
         </button>
         <input
           type="text"

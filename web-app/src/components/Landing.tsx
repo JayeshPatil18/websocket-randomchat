@@ -23,6 +23,11 @@ const Landing: React.FC<LandingProps> = ({ onJoinChat }) => {
         value={campusCode}
         onChange={(e) => setCampusCode(e.target.value)}
         className="campus-code-input"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            handleJoinClick();
+          }
+        }}
       />
       <button onClick={handleJoinClick} className="join-chat-btn">
         Join Chat
