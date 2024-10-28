@@ -20,7 +20,10 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
     // Join the chat room when campus code is provided
     socket.emit('joinCampus', campusCode);
 
-    socket.once('waiting', () => setIsSearching(true));
+    socket.once('waiting', () => {
+      setIsSearching(true)
+      setChatHistory([]);
+    });
     socket.once('paired', (data: { message: string; partnerId: string }) => {
       setIsConnected(true);
       setIsSearching(false);
@@ -36,6 +39,13 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
       if (msg !== "A new user has joined campus ghrcem") {
         setSysMsg(msg);
       }
+
+      if(msg.includes("skipped")){
+        // after skipped , emit a new join request from react app
+        socket.emit('joinCampus', campusCode);
+        setIsSearching(true)
+        setIsConnected(false);
+      }
     });
 
     socket.on('message', (msg) => {
@@ -44,7 +54,6 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
 
     socket.on('userDisconnected', () => {
       setChatHistory((prev) => [...prev, { sender: 'System', message: 'Your chat partner has disconnected.' }]);
-      handleSkip();
     });
 
     // Cleanup event listeners when component unmounts
@@ -67,12 +76,11 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
   };
 
   const handleSkip = () => {
-    socket.emit('skip');
-
     setIsConnected(false);
     setIsSearching(true);
-    // setChatHistory([]);
-    setSysMsg("You're now chatting with a random stranger.");
+    setChatHistory([]);
+
+    socket.emit('skip');
   };
 
   const handleSystemMessage = () => {
