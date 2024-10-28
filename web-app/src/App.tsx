@@ -36,7 +36,7 @@ const App: React.FC = () => {
 
   const handleSkip = () => {
     setIsConnected(false);
-    setIsSearching(false);
+    setIsSearching(true);
   };
 
   return (
