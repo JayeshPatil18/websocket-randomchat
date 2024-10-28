@@ -67,6 +67,8 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
   };
 
   const handleSkip = () => {
+    socket.emit('skip');
+
     setIsConnected(false);
     setIsSearching(true);
     // setChatHistory([]);
@@ -102,7 +104,16 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
       <div className="message-box">
         {isConnected ? (
           <>
-            <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#979797' }}>{sysMsg}</p>
+            <p
+              style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: sysMsg.includes('skip') ? '#6c63ff' : '#979797' // Conditional color based on 'skip'
+              }}
+            >
+              {sysMsg}
+            </p>
+
             {handleSystemMessage() && (
               <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#979797' }}>
                 <br />
