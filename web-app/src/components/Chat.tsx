@@ -3,75 +3,79 @@ import React, { useState, useEffect } from 'react';
 import './Chat.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import socket from '../socket';
-import generateRandomString from '../method';
 
 interface ChatProps {
-  isConnected: boolean;
-  onSkip: () => void;
+  campusCode: string;
 }
 
-const Chat: React.FC<ChatProps> = ({ isConnected, onSkip }) => {
+const Chat: React.FC<ChatProps> = ({ campusCode }) => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [isSearching, setIsSearching] = useState(true);
   const [chatMessage, setChatMessage] = useState<string>('');
   const [chatHistory, setChatHistory] = useState<{ sender: string; message: string }[]>([]);
   const [userID, setUserId] = useState('');
   const [sysMsg, setSysMsg] = useState("You're now chatting with a random stranger.");
 
   useEffect(() => {
-    // Set up socket event listeners
-    socket.once('paired', (data: { message: any; partnerId: any }) => {
-      const { message, partnerId } = data;
-      setUserId(partnerId);
-      // setSysMsg(message);
+    // Join the chat room when campus code is provided
+    socket.emit('joinCampus', campusCode);
+
+    socket.once('waiting', () => setIsSearching(true));
+    socket.once('paired', (data: { message: string; partnerId: string }) => {
+      setIsConnected(true);
+      setIsSearching(false);
+      setUserId(data.partnerId);
+      setSysMsg(data.message || "You're now paired with a stranger.");
+    });
+    socket.once('error', (msg) => {
+      alert(msg);
+      setIsSearching(false);
     });
 
     socket.on('notification', (msg) => {
-      // setChatHistory((prevHistory) => [...prevHistory, { sender: 'System', message: msg }]);
-      if (!(msg === "A new user has joined campus ghrcem")) {
+      if (msg !== "A new user has joined campus ghrcem") {
         setSysMsg(msg);
       }
     });
 
-    socket.on('error', (msg) => {
-      alert(msg); // Show an alert with the error message
-    });
-
     socket.on('message', (msg) => {
-      setChatHistory((prevHistory) => [...prevHistory, { sender: 'Partner', message: msg.message }]);
+      setChatHistory((prev) => [...prev, { sender: 'Partner', message: msg.message }]);
     });
 
     socket.on('userDisconnected', () => {
-      setChatHistory((prevHistory) => [
-        ...prevHistory,
-        { sender: 'System', message: 'Your chat partner has disconnected.' }
-      ]);
-      onSkip()
+      setChatHistory((prev) => [...prev, { sender: 'System', message: 'Your chat partner has disconnected.' }]);
+      handleSkip();
     });
 
-    // Cleanup function to remove socket listeners when component unmounts
+    // Cleanup event listeners when component unmounts
     return () => {
+      socket.off('waiting');
       socket.off('paired');
-      socket.off('notification');
       socket.off('error');
+      socket.off('notification');
       socket.off('message');
       socket.off('userDisconnected');
     };
-  }, []);
+  }, [campusCode]);
 
   const handleSendMessage = () => {
     if (chatMessage) {
       setChatHistory([...chatHistory, { sender: 'You', message: chatMessage }]);
-      socket.emit('message', { message: chatMessage }); // Send message to paired user
+      socket.emit('message', { message: chatMessage });
       setChatMessage('');
     }
   };
 
-  const handleSystemMessage = () => {
-    if (chatHistory.length === 0 && (sysMsg === "You're now chatting with a random stranger." ||  sysMsg === "You are now paired with a random user")) {
+  const handleSkip = () => {
+    setIsConnected(false);
+    setIsSearching(true);
+    // setChatHistory([]);
+    setSysMsg("You're now chatting with a random stranger.");
+  };
 
-      return true;
-    }
-    return false;
-  }
+  const handleSystemMessage = () => {
+    return chatHistory.length === 0 && (sysMsg === "You're now chatting with a random stranger." || sysMsg === "You are now paired with a random user");
+  };
 
   return (
     <div className="chat">
@@ -82,8 +86,10 @@ const Chat: React.FC<ChatProps> = ({ isConnected, onSkip }) => {
               <i className="fas fa-user-circle" style={{ marginRight: '8px', color: '#6c63ff' }}></i>
               {userID ? `ID: ${userID}` : 'Partner'}
             </p>
-          ) : (
+          ) : isSearching ? (
             <p style={{ margin: 0 }}>🔍 Waiting for partner...</p>
+          ) : (
+            <p style={{ margin: 0 }}>Disconnected</p>
           )}
         </div>
         {isConnected && (
@@ -118,7 +124,7 @@ const Chat: React.FC<ChatProps> = ({ isConnected, onSkip }) => {
       </div>
 
       <div className="input-box">
-        <button onClick={onSkip} className="skip-btn">
+        <button onClick={handleSkip} className="skip-btn">
           Skip
         </button>
         <input
