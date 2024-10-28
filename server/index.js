@@ -27,7 +27,7 @@ app.use(express.static('public'));
 app.use(cors()); // Use the CORS middleware
 
 // Add a new endpoint to check server status
-app.get('/', (req, res) => {
+app.get('/status', (req, res) => {
   res.json({ message: 'Server is running!' });
 });
 
