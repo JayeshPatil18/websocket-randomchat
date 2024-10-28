@@ -29,34 +29,24 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
     // Join the chat room when campus code is provided
     socket.emit('joinCampus', campusCode);
 
-    socket.on('waiting', () => {
-      setIsSearching(true)
-      setChatHistory([]);
-    });
     socket.on('paired', (data: { message: string; partnerId: string }) => {
       setIsConnected(true);
       setIsSearching(false);
       setUserId(data.partnerId);
       setSysMsg(data.message || "You're now paired with a stranger.");
     });
+    
     socket.on('error', (msg) => {
       alert(msg);
       setIsSearching(false);
     });
 
     socket.on('notification', (msg) => {
-      if (msg !== "A new user has joined campus ghrcem") {
-        setSysMsg(msg);
-      }
-
-      if(msg.includes("Your chat partner has skipped")){
-        // after skipped , emit a new join request from react app
+      setSysMsg(msg); // Simplified handling of notifications
+      if (msg.includes("Your chat partner has skipped")) {
         socket.emit('joinCampus', campusCode);
-        // setIsSearching(true)
-        // setIsConnected(false);
-
         setChatHistory([]);
-        setSkipBtnText("New")
+        setSkipBtnText("New");
       }
     });
 
@@ -64,18 +54,12 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
       setChatHistory((prev) => [...prev, { sender: 'Partner', message: msg.message }]);
     });
 
-    socket.on('userDisconnected', () => {
-      setChatHistory((prev) => [...prev, { sender: 'System', message: 'Your chat partner has disconnected.' }]);
-    });
-
     // Cleanup event listeners when component unmounts
     return () => {
-      socket.off('waiting');
       socket.off('paired');
       socket.off('error');
       socket.off('notification');
       socket.off('message');
-      socket.off('userDisconnected');
     };
   }, [campusCode]);
 
@@ -88,7 +72,6 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
   };
 
   const handleSkip = () => {
-    
     setIsConnected(false);
     setIsSearching(true);
     setChatHistory([]);
@@ -149,12 +132,12 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
             {chatHistory.map((msg, index) => (
               <div key={index} className="chat-message">
                 <span
-        dangerouslySetInnerHTML={{
-            __html: msg.sender.includes('You')
-                ? `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0<strong>${msg.sender}: </strong>    `
-                : `<strong>${msg.sender}: </strong>`,
-        }}
-    />
+                  dangerouslySetInnerHTML={{
+                    __html: msg.sender.includes('You')
+                      ? `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0<strong>${msg.sender}: </strong>    `
+                      : `<strong>${msg.sender}: </strong>`,
+                  }}
+                />
                 <span className={`message-text ${msg.sender === 'Partner' ? 'partner' : ''}`}>{msg.message}</span>
               </div>
             ))}
