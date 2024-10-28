@@ -26,6 +26,11 @@ const VALID_CAMPUS_CODE = 'ghrcem'; // Replace with your desired campus code
 app.use(express.static('public'));
 app.use(cors()); // Use the CORS middleware
 
+// Add a new endpoint to check server status
+app.get('/', (req, res) => {
+  res.json({ message: 'Server is running!' });
+});
+
 // Store users in waiting and active lists
 let waitingList = []; // Format: [{ socketId, campusCode }]
 let activeList = {}; // Format: { [socketId]: partnerSocketId }
