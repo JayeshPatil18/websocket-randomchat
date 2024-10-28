@@ -1,5 +1,5 @@
 // src/components/Chat.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Chat.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import socket from '../socket';
@@ -16,6 +16,14 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
   const [userID, setUserId] = useState('');
   const [sysMsg, setSysMsg] = useState("You're now chatting with a random stranger.");
   const [skipBtnText, setSkipBtnText] = useState("Skip");
+  const messageBoxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Scroll to the bottom of the message box whenever chatHistory changes
+    if (messageBoxRef.current) {
+      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+    }
+  }, [chatHistory]);
 
   useEffect(() => {
     // Join the chat room when campus code is provided
@@ -119,7 +127,7 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
         )}
       </div>
 
-      <div className="message-box">
+      <div className="message-box" ref={messageBoxRef}>
         {isConnected ? (
           <>
             <p
