@@ -37,7 +37,7 @@
   display: flex;
   align-items: center;
   margin: 0.8rem 0; /* Spacing between messages */
-  color: #615EF0;
+  color: #09083c;
   font-size: 15px;
 }
 
@@ -51,6 +51,11 @@
   font-size: 17px;
   word-wrap: break-word; /* Break long words */
   max-width: 80%; /* Prevent overflowing of message bubbles */
+}
+
+.message-text.partner {
+  background-color: #dcdbff; /* Partner message bubble background */
+  color: #212161; /* Partner text color */
 }
 
 .input-box {

@@ -140,8 +140,14 @@ const Chat: React.FC<ChatProps> = ({ campusCode }) => {
             )}
             {chatHistory.map((msg, index) => (
               <div key={index} className="chat-message">
-                <strong>{msg.sender}: </strong>
-                <span className="message-text">{msg.message}</span>
+                <span
+        dangerouslySetInnerHTML={{
+            __html: msg.sender.includes('You')
+                ? `\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0<strong>${msg.sender}: </strong>    `
+                : `<strong>${msg.sender}: </strong>`,
+        }}
+    />
+                <span className={`message-text ${msg.sender === 'Partner' ? 'partner' : ''}`}>{msg.message}</span>
               </div>
             ))}
           </>
