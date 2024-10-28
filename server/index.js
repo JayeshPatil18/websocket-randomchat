@@ -11,9 +11,9 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-      origin: 'http://localhost:5173', // allow your React app's origin
-      methods: ['GET', 'POST'],
-      credentials: true, // allow credentials if needed
+    origin: 'http://localhost:5173', // allow your React app's origin
+    methods: ['GET', 'POST'],
+    credentials: true, // allow credentials if needed
   },
 });
 
@@ -55,14 +55,14 @@ io.on('connection', (socket) => {
       connectedUsers[randomPartnerId].partnerId = socket.id;
 
       // Notify both users that they have been paired, including partnerId
-  socket.emit('paired', {
-    message: `You are now paired with a random user.`,
-    partnerId: randomPartnerId
-  });
-  io.to(randomPartnerId).emit('paired', {
-    message: `You are now paired with a random user.`,
-    partnerId: socket.id
-  });
+      socket.emit('paired', {
+        message: `You are now paired with a random user.`,
+        partnerId: randomPartnerId,
+      });
+      io.to(randomPartnerId).emit('paired', {
+        message: `You are now paired with a random user.`,
+        partnerId: socket.id,
+      });
     } else {
       // Add the user to the list, without a partner yet
       connectedUsers[socket.id] = { campusCode, partnerId: null };
@@ -87,6 +87,26 @@ io.on('connection', (socket) => {
       io.to(recipientSocketId).emit('message', { message: msg.message, senderId: socket.id });
     } else {
       socket.emit('error', 'Your chat partner has disconnected.');
+    }
+  });
+
+  socket.on('skip', () => {
+    const user = connectedUsers[socket.id];
+    if (user && user.partnerId) {
+      const partnerSocketId = user.partnerId;
+      
+      // Notify the partner that the user has skipped
+      if (connectedUsers[partnerSocketId]) {
+        io.to(partnerSocketId).emit('notification', 'Your chat partner has skipped the chat.');
+        connectedUsers[partnerSocketId].partnerId = null; // Remove the partner link
+      }
+      
+      // Remove the user from the connected users list
+      delete connectedUsers[socket.id];
+      
+      // Emit a disconnection message to the skipping user
+      socket.emit('notification', "You've been skipped.");
+      socket.disconnect(); // Disconnect the user
     }
   });
 
