@@ -28,10 +28,36 @@ const VALID_CAMPUS_CODE = 'ghrcem'; // Replace with your desired campus code
 app.use(express.static('public'));
 app.use(cors()); // Use the CORS middleware
 
+
 // Add a new endpoint to check server status
 app.get('/status', (req, res) => {
-  res.json({ message: 'Server is running!' });
+  res.json({ 
+    message: 'Server is running!', 
+    waitingList: waitingList.length,
+    activeList: Object.keys(activeList).length
+  });
 });
+
+// New endpoint to get all messages with specific fields
+app.get('/messages', async (req, res) => {
+  try {
+    const messages = await Message.find(); // Fetch all messages from the database
+
+    // Map messages to include only the required fields
+    const responseMessages = messages.map(msg => ({
+      timestamp: msg.timestamp.toISOString().substring(0, 19).replace('T', ' '), // Convert to simple date:time format
+      senderId: msg.senderId,
+      receiverId: msg.receiverId,
+      message: msg.message,
+    }));
+
+    res.json(responseMessages); // Send the filtered messages back as JSON
+  } catch (err) {
+    console.error('Error fetching messages:', err);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
 
 // Store users in waiting and active lists
 let waitingList = []; // Format: [{ socketId, campusCode }]
