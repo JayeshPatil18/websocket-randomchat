@@ -1,3 +1,5 @@
+const { User, Message } = require('./database');
+
 // server/index.js
 require('dotenv').config();
 const express = require('express');
@@ -39,7 +41,7 @@ let activeList = {}; // Format: { [socketId]: partnerSocketId }
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  socket.on('joinCampus', (campusCode) => {
+  socket.on('joinCampus', async (campusCode) => {
     // Check if the entered campus code matches the predefined static value
     if (campusCode.toLowerCase() !== VALID_CAMPUS_CODE.toLowerCase()) {
       socket.emit('error', 'Invalid campus code. Please try again.');
@@ -50,6 +52,9 @@ io.on('connection', (socket) => {
     waitingList.push({ socketId: socket.id, campusCode });
     console.log(`User added to waiting list: ${socket.id}`);
 
+    // Save new user to MongoDB
+    await User.create({ socketId: socket.id, campusCode, status: 'waiting' });
+
     // Attempt to match user with a partner
     matchUser(socket);
     
@@ -58,11 +63,14 @@ io.on('connection', (socket) => {
     io.to(campusCode).emit('notification', `A new user has joined campus ${campusCode}`);
   });
 
-  socket.on('message', (msg) => {
+  socket.on('message', async (msg) => {
     const partnerId = activeList[socket.id];
     if (partnerId) {
       // Send the message to the partner
       io.to(partnerId).emit('message', { message: msg.message, senderId: socket.id });
+    
+      // Save message to MongoDB
+    await Message.create({ senderId: socket.id, receiverId: partnerId, message: msg.message });
     } else {
       socket.emit('error', 'No active chat partner found.');
     }
@@ -80,7 +88,7 @@ io.on('connection', (socket) => {
 });
 
 // Helper function to match users
-function matchUser(socket) {
+async function matchUser(socket) {
   // Check if there's another user in the waiting list
   const waitingUserIndex = waitingList.findIndex(user => user.socketId !== socket.id);
 
@@ -98,12 +106,17 @@ function matchUser(socket) {
     // Remove both users from the waiting list
     waitingList.splice(waitingUserIndex, 1);
     waitingList = waitingList.filter(user => user.socketId !== socket.id);
+
+    // Update both users' status in MongoDB to active
+    await User.updateOne({ socketId: socket.id }, { status: 'active', partnerSocketId: waitingUser.socketId });
+    await User.updateOne({ socketId: waitingUser.socketId }, { status: 'active', partnerSocketId: socket.id });
+
     console.log(`Users matched: ${socket.id} with ${waitingUser.socketId}`);
   }
 }
 
 // Handle user skipping the chat
-function handleSkip(socket) {
+async function handleSkip(socket) {
   const partnerId = activeList[socket.id];
   if (partnerId) {
     // Notify the partner that the user has skipped
@@ -112,6 +125,10 @@ function handleSkip(socket) {
     // Remove both users from the active list
     delete activeList[partnerId];
     delete activeList[socket.id];
+
+    // Update both users' status in MongoDB to waiting
+    await User.updateOne({ socketId: socket.id }, { status: 'waiting', partnerSocketId: null });
+    await User.updateOne({ socketId: partnerId }, { status: 'waiting', partnerSocketId: null });
   }
 
   // Add user back to the waiting list
@@ -123,7 +140,7 @@ function handleSkip(socket) {
 }
 
 // Handle user disconnection
-function handleDisconnection(socketId) {
+async function handleDisconnection(socketId) {
   // Remove user from active list
   const partnerId = activeList[socketId];
   if (partnerId) {
@@ -134,6 +151,9 @@ function handleDisconnection(socketId) {
 
   // Remove from waiting list if present
   waitingList = waitingList.filter(user => user.socketId !== socketId);
+
+  // Remove user from MongoDB
+  await User.deleteOne({ socketId });
 }
 
 // Start the server
