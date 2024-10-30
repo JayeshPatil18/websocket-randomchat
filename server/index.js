@@ -102,6 +102,20 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('typing', () => {
+    const partnerId = activeList[socket.id];
+    if (partnerId) {
+      io.to(partnerId).emit('typing');
+    }
+  });
+
+  socket.on('stopTyping', () => {
+    const partnerId = activeList[socket.id];
+    if (partnerId) {
+      io.to(partnerId).emit('stopTyping');
+    }
+  });
+
   socket.on('skip', () => {
     console.log(`User skipped: ${socket.id}`);
     handleSkip(socket);
